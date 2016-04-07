@@ -98,7 +98,7 @@ export default {
 
     lightsOn() {
       return this.lights;
-    },
+    }
 
   },
 
