@@ -1,5 +1,6 @@
 const webpack = require('webpack')
 const simpleVars = require('postcss-simple-vars')
+const precss = require('precss')
 
 module.exports = {
   entry: './src/client/main.js',
@@ -37,6 +38,6 @@ module.exports = {
     })
   ],
   postcss: function () {
-    return [simpleVars]
+    return [simpleVars, precss]
   }
 }
