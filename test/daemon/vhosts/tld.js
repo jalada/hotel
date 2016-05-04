@@ -7,6 +7,22 @@ describe('*.tld', () => {
   before(() => app = helper.before())
   after(helper.after)
 
+  describe('GET hotel.tld', () => {
+    it('should return 200', done => {
+      request(app)
+        .get('/')
+        .set('Host', 'hotel.dev')
+        .expect(200, done)
+    })
+
+    it('should serve http://hotel.dev/index.html', done => {
+      request(app)
+        .get('/index.html')
+        .set('Host', 'hotel.dev')
+        .expect(200, done)
+    })
+  })
+
   describe('GET http://node.dev', () => {
     it('should proxy request', done => {
       request(app)
@@ -21,6 +37,15 @@ describe('*.tld', () => {
       request(app)
         .get('/')
         .set('Host', 'subdomain.node.dev')
+        .expect(200, /Hello World/, done)
+    })
+  })
+
+  describe('GET http://any.node.dev', () => {
+    it('should proxy request', done => {
+      request(app)
+        .get('/')
+        .set('Host', 'any.node.dev')
         .expect(200, /Hello World/, done)
     })
   })

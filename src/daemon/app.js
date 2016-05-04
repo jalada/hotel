@@ -11,31 +11,33 @@ const tcpProxy = require('./tcp-proxy')
 const IndexRouter = require('./routers')
 const APIRouter = require('./routers/api')
 const Events = require('./events')
-const HotelHost = require('./vhosts/hotel-dev')
-const DevHost = require('./vhosts/dev')
+const TLDHost = require('./vhosts/tld')
 
 const API_ROOT = '/_'
 
-const proxy = httpProxy.createProxyServer()
-
 // Take a req and extract server id based on host
 function parseReq (req) {
-  const [hostname, port] = req.headers.host.split(':')
-  const regexp = new RegExp(`.${conf.tld}$`)
-  const id = hostname.replace(regexp, '')
-  return { id, port }
+  if (req.headers.host) {
+    const [hostname, port] = req.headers.host.split(':')
+    const regexp = new RegExp(`.${conf.tld}$`)
+    const id = hostname.replace(regexp, '')
+    return { id, port }
+  } else {
+    util.log('No host header found')
+    return {}
+  }
 }
 
 module.exports = (servers) => {
   const app = express()
   const server = http.createServer(app)
+  const proxy = httpProxy.createProxyServer()
 
   // Initialize routes
   const indexRouter = IndexRouter(servers)
   const api = APIRouter(servers)
   const events = Events(servers)
-  const hotelHost = HotelHost(servers)
-  const devHost = DevHost(servers)
+  const tldHost = TLDHost(servers)
 
   // requests timeout
   serverReady.timeout = conf.timeout
@@ -46,14 +48,13 @@ module.exports = (servers) => {
   // API
   app.use(`${API_ROOT}/servers`, api)
 
-  // .dev hosts
-  app.use(vhost(`hotel.${conf.tld}`, hotelHost))
-  app.use(vhost(new RegExp(`.*\.${conf.tld}`), devHost))
+  // .tld host
+  app.use(vhost(new RegExp(`.*\.${conf.tld}`), tldHost))
 
   // public
   app.use(express.static(`${__dirname}/public`))
 
-  // Server router
+  // localhost router
   app.use(indexRouter)
 
   // Handle CONNECT, used by WebSockets and https when accessing .dev domains

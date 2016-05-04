@@ -18,7 +18,7 @@ function stopMonitor (store, id) {
 }
 
 function watchMonitors ({ dispatch }) {
-  if (EventSource) {
+  if (window.EventSource) {
     new EventSource(`${API_ROOT}/events`).onmessage = event => {
       const data = JSON.parse(event.data)
       dispatch('SET_MONITORS', data.monitors)
@@ -36,13 +36,18 @@ let eventSource
 function watchOutput ({ dispatch }, id) {
   eventSource && eventSource.close()
   dispatch('WATCH_OUTPUT', id)
-  eventSource = new EventSource(`${API_ROOT}/events/output/${id}`)
-  eventSource.onmessage = (event) => {
-    JSON
-      .parse(event.data)
-      .output
-      .split('\n')
-      .forEach((line) => dispatch('PUSH_OUTPUT', line))
+
+  if (window.EventSource) {
+    eventSource = new EventSource(`${API_ROOT}/events/output/${id}`)
+    eventSource.onmessage = (event) => {
+      JSON
+        .parse(event.data)
+        .output
+        .split('\n')
+        .forEach((line) => dispatch('PUSH_OUTPUT', line))
+    }
+  } else {
+    dispatch('PUSH_OUTPUT', 'Sorry, server logs aren\'t supported on this browser :(')
   }
 }
 
